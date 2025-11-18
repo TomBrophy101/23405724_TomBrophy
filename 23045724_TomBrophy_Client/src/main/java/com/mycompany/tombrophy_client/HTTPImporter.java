@@ -28,6 +28,8 @@ public class HTTPImporter {
     public static void importEventsFromHttp(String urlString, PrintWriter toServer, BufferedReader fromServer) {
         int imported = 0;
         int skipped  = 0;
+        
+        Map<String, String> latestReplyByDate = new LinkedHashMap<>();
 
         try {
             URL url = new URL(urlString);
@@ -89,10 +91,16 @@ public class HTTPImporter {
                     toServer.flush();
 
                     String reply = fromServer.readLine();
-                    System.out.println(reply != null ? reply : "(no reply from server)");
-
+                    String safeReply = (reply != null ? reply : "(no reply from server)");
+                    
+                    latestReplyByDate.put(date, safeReply);
+                    
                     imported++;
                 }
+            }
+            
+            for (String reply : latestReplyByDate.values()) {
+                System.out.println(reply);
             }
 
             System.out.println("Imported: " + imported + "; Skipped: " + skipped);
