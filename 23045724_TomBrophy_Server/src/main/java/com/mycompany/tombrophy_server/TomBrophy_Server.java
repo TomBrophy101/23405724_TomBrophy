@@ -27,7 +27,7 @@ class Event {
 public class TomBrophy_Server {
     private static final int PORT = 1012; // Using a standard port for the server
     // Thread-safe map to store events, keyed by date for easy listing
-    private static final String EVENTS_FILE = "events_local.txt";
+    private static final String EVENTS_FILE = "events.txt";
     private final Map<String, List<Event>> eventBoard = new ConcurrentHashMap<>();
 
     public void start() {
