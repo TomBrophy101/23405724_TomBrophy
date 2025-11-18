@@ -56,7 +56,7 @@ public class HTTPImporter {
                     line = line.trim();
                     if (line.isEmpty()) continue;
 
-                    String[] parts = line.split(";", -1);
+                    String[] parts = line.split(";", 4);
                     if (parts.length != 3) {
                         System.out.println("Skipped line " + lineNo + ": needs exactly 3 fields separated by ';'");
                         skipped++;
