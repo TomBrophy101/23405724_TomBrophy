@@ -84,7 +84,7 @@ public class HTTPImporter {
                     }
 
                     // Spec: send to server as-is (don’t reformat)
-                    String cmd = "add; " + date + "; " + time + ", " + desc;
+                    String cmd = "add; " + date + "; " + time + "; " + desc;
                     toServer.println(cmd);
                     toServer.flush();
 
