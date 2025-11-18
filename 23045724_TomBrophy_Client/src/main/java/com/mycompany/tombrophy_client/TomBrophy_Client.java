@@ -37,7 +37,7 @@ public class TomBrophy_Client {
             if (banner != null) {
                 System.out.println("SERVER> " + banner);
                 
-                String defaultUrl = "https://raw.githubusercontent.com/TomBrophy101/23405724_TomBrophy/master/events.txt";
+                String defaultUrl = "https://raw.githubusercontent.com/TomBrophy101/23405724_TomBrophy/master/23045724_TomBrophy_Server/events.txt";
                 System.out.println("Importing intials events from: " + defaultUrl);
                 HTTPImporter.importEventsFromHttp(defaultUrl, out, in);
                 
