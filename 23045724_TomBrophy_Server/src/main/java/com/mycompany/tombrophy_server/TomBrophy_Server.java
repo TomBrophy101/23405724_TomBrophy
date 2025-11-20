@@ -12,15 +12,34 @@ class Event {
     String description;
 
     public Event(String date, String time, String description) {
-        this.date = date;
-        this.time = time;
-        this.description = description;
+        this.date = date.trim();
+        this.time = time.trim();
+        this.description = description.trim();
     }
 
     // This is used to uniquely identify an event for removal
     @Override
     public String toString() {
         return String.format("%s; %s; %s", date, time, description);
+    }
+    
+    @Override
+    public boolean equals(Object o ) {
+        if (this == o) 
+            return true;
+        if (!(o instanceof Event))
+            return false;
+        Event other = (Event) o;
+        return date.equalsIgnoreCase(other.date) && time.equalsIgnoreCase(other.time) && description.equalsIgnoreCase(other.description);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(
+                date.toLowerCase(),
+                time.toLowerCase(),
+                description.toLowerCase()
+        );
     }
 }
 
@@ -32,6 +51,8 @@ public class TomBrophy_Server {
 
     public void start() {
         System.out.println("TomBrophy_Server started on port: " + PORT);
+        
+        loadEventsFromFile();
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             while (true) {
                 // Accept new client connection and start a new thread to handle it
@@ -158,15 +179,18 @@ public class TomBrophy_Server {
                     validateTime(time);
                    
                     Event eventToRemove = new Event(date, time, desc);
+                    
                     List<Event> eventsOnDate = eventBoard.get(date);
                    
                     if (eventsOnDate != null) {
                         // Remove the event based on its string representation equality
-                        boolean removed = eventsOnDate.removeIf(e -> e.toString().equals(eventToRemove.toString()));
+                        boolean removed = eventsOnDate.remove(eventToRemove);
                        
                         if (!removed) {
                             return "ERROR: Event not found on " + date;
                         }
+                        
+                        Collections.sort(eventsOnDate, Comparator.comparing(e -> e.time));
                         
                         saveEventsToFile();
                        
@@ -285,6 +309,41 @@ public class TomBrophy_Server {
         } catch (IOException e) {
             System.err.println("Failed to save events to file: " + e.getMessage());
         }
+    }
+    
+    private void loadEventsFromFile() {
+        File file = new File(EVENTS_FILE);
+        if (!file.exists()) {
+            return;
+        }
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty())
+                    continue;
+                
+                String[] parts = line.split(";", 3);
+                if (parts.length < 3) 
+                    continue;
+                
+                String date = parts[0].trim();
+                String time = parts[1].trim();
+                String desc = parts[2].trim();
+                
+                Event e = new Event(date, time, desc);
+                
+                synchronized (eventBoard) {
+                    List<Event> list = eventBoard.computeIfAbsent(
+                            date, k -> Collections.synchronizedList(new ArrayList<>()));
+                    list.add(e);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to load events from file: " + e.getMessage());
+        }
+        
     }
     public static void main(String[] args) {
         new TomBrophy_Server().start();
