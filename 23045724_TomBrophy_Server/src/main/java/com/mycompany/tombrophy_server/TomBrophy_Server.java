@@ -159,9 +159,18 @@ public class TomBrophy_Server {
                     synchronized (eventBoard) {
                         // Get or create the list for the given date
                         List<Event> eventsForDate = eventBoard.computeIfAbsent(date, k -> Collections.synchronizedList(new ArrayList<>()));
-                        eventsForDate.add(eventToAdd);
-                        // Sort the list by time (simple string comparison for now)
-                        Collections.sort(eventsForDate, Comparator.comparing(e -> e.time));
+                        
+                        boolean eventExists = eventsForDate.stream().anyMatch(e -> 
+                                e.date.trim().equalsIgnoreCase(eventToAdd.date.trim()) &&
+                                e.time.trim().equalsIgnoreCase(eventToAdd.time.trim()) &&
+                                e.description.trim().equalsIgnoreCase(eventToAdd.description.trim())        
+                        );
+                        
+                        if (!eventExists) {
+                            eventsForDate.add(eventToAdd);
+                            // Sort the list by time (simple string comparison for now)
+                            Collections.sort(eventsForDate, Comparator.comparing(e -> e.time));
+                        }
                     }
                    
                     saveEventsToFile();
