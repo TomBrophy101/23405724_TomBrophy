@@ -2,6 +2,8 @@ package com.mycompany.tombrophy_server;
 
 import java.io.*;
 import java.net.*;
+import java.time.*;
+import java.time.format.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -320,19 +322,52 @@ public class TomBrophy_Server {
         }
     }
     
+    private static final DateTimeFormatter[] DATE_FMTS = new DateTimeFormatter[] {
+        new DateTimeFormatterBuilder()
+            .parseCaseInsensitive()
+            .appendPattern("d MMMM yyyy")
+            .toFormatter(Locale.ENGLISH),
+        DateTimeFormatter.ISO_LOCAL_DATE
+    };
+    
+    private LocalDate parseDate(String s) {
+        for (DateTimeFormatter f : DATE_FMTS) {
+            try {
+                return LocalDate.parse(s.trim(), f);
+            } catch (DateTimeParseException ignored) {}
+        }
+        return LocalDate.MAX;
+    }
+    
     private synchronized void saveEventsToFile() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(EVENTS_FILE))) {
-            for (List<Event> events : eventBoard.values()) {
-                for (Event e : events) {
+            
+            List<String> dates = new ArrayList<>(eventBoard.keySet());
+            dates.sort((d1, d2) -> parseDate(d1).compareTo(parseDate(d2)));
+            
+            for (String dateKey : dates) {
+                List<Event> events = eventBoard.get(dateKey);
+                if (events == null || events.isEmpty()) 
+                    continue;
+                
+                List<Event> copy = new ArrayList<>(events);
+                copy.sort(Comparator.comparing(e -> e.time));
+                
+                for (Event e : copy) {
                     writer.printf("%s; %s; %s%n", e.date, e.time, e.description);
                 }
             }
+//            for (List<Event> events : eventBoard.values()) {
+//                for (Event e : events) {
+//                    writer.printf("%s; %s; %s%n", e.date, e.time, e.description);
+//                }
+//            }
         } catch (IOException e) {
             System.err.println("Failed to save events to file: " + e.getMessage());
         }
     }
     
-    private void loadEventsFromFile() {
+    private synchronized void loadEventsFromFile() {
         File file = new File(EVENTS_FILE);
         if (!file.exists()) {
             return;
