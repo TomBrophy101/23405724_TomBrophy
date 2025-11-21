@@ -29,7 +29,7 @@ public class TomBrophy_ClientRun implements Runnable {
             System.out.println("Message received from client:" + EventBoardClientID + " " + message);
             out.println("Echo Message: " + message);
         } catch(IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
         
         finally
