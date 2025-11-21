@@ -187,16 +187,28 @@ public class TomBrophy_Server {
                     validateDate(date);
                     validateTime(time);
                    
-                    Event eventToRemove = new Event(date, time, desc);
+                    //Event eventToRemove = new Event(date, time, desc);
                     
                     List<Event> eventsOnDate = eventBoard.get(date);
                    
                     if (eventsOnDate != null) {
-                        // Remove the event based on its string representation equality
-                        boolean removed = eventsOnDate.remove(eventToRemove);
-                       
-                        if (!removed) {
-                            return "ERROR: Event not found on " + date;
+                        Event removedEvent = null;
+                        
+                        Iterator<Event> it = eventsOnDate.iterator();
+                        while (it.hasNext()) {
+                            Event e = it.next();
+                            if (e.date.trim().equalsIgnoreCase(date.trim()) &&
+                                e.time.trim().equalsIgnoreCase(time.trim()) &&
+                                e.description.trim().equalsIgnoreCase(desc.trim())) {
+                                
+                                removedEvent = e;
+                                it.remove();
+                                break;
+                            }
+                        }
+                        
+                        if(removedEvent == null) {
+                            return "Error: Event not found on " + date;
                         }
                         
                         Collections.sort(eventsOnDate, Comparator.comparing(e -> e.time));
@@ -204,7 +216,7 @@ public class TomBrophy_Server {
                         saveEventsToFile();
                        
                         // Server replies with a list of all events that are still due on the date of the removed event.
-                        return formatEventList(eventsOnDate);
+                        return removedEvent.date + "; " + removedEvent.time +", " + removedEvent.description + " has been removed";
                     }
                    
                     return "no events";
