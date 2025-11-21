@@ -14,7 +14,6 @@ public class TomBrophy_Client {
     private static InetAddress host;
     private static final int PORT = 1012;
     
-    
     public static void main(String[] args) {
         try {
             host = InetAddress.getLocalHost();
