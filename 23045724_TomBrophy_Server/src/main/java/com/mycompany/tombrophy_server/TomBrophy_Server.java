@@ -155,30 +155,31 @@ public class TomBrophy_Server {
                     
                     validateTime(time);
 
-                    Event eventToAdd = new Event(date, time, desc);
+                    Event eventAdded = new Event(date, time, desc);
                    
                     // Synchronized block for thread safety on the map
                     synchronized (eventBoard) {
                         // Get or create the list for the given date
                         List<Event> eventsForDate = eventBoard.computeIfAbsent(date, k -> Collections.synchronizedList(new ArrayList<>()));
-                        
-                        boolean eventExists = eventsForDate.stream().anyMatch(e -> 
-                                e.date.trim().equalsIgnoreCase(eventToAdd.date.trim()) &&
-                                e.time.trim().equalsIgnoreCase(eventToAdd.time.trim()) &&
-                                e.description.trim().equalsIgnoreCase(eventToAdd.description.trim())        
-                        );
-                        
-                        if (!eventExists) {
-                            eventsForDate.add(eventToAdd);
-                            // Sort the list by time (simple string comparison for now)
-                            Collections.sort(eventsForDate, Comparator.comparing(e -> e.time));
-                        }
+                        eventsForDate.add(eventAdded);
+                        Collections.sort(eventsForDate, Comparator.comparing(e -> e.time));
+//                        boolean eventExists = eventsForDate.stream().anyMatch(e -> 
+//                                e.date.trim().equalsIgnoreCase(eventToAdd.date.trim()) &&
+//                                e.time.trim().equalsIgnoreCase(eventToAdd.time.trim()) &&
+//                                e.description.trim().equalsIgnoreCase(eventToAdd.description.trim())        
+//                        );
+//                        
+//                        if (!eventExists) {
+//                            eventsForDate.add(eventToAdd);
+//                            // Sort the list by time (simple string comparison for now)
+//                            Collections.sort(eventsForDate, Comparator.comparing(e -> e.time));
+//                        }
                     }
                    
                     saveEventsToFile();
                     
                     // Server replies with a list of all events due on the new event's date.
-                    return formatEventList(eventBoard.get(date));
+                    return eventAdded.date + "; " + eventAdded.time + ", " + eventAdded.description + " has been added";
 
                 case "remove":
                     // Assignment: action; date; time; description (4 fields)
