@@ -118,16 +118,20 @@ public class HTTPImporter {
         for (DateTimeFormatter f : DATE_FMTS) {
             try { 
                 LocalDate.parse(s, f); return true; 
+            } catch (DateTimeException ignored) {
+                
             }
-            catch (DateTimeException ignored) {}
         }
         return false;
     }
 
     private static boolean isValidTime(String s) {
         for (DateTimeFormatter f : TIME_FMTS) {
-            try { LocalTime.parse(s, f); return true; }
-            catch (DateTimeException ignored) {}
+            try { LocalTime.parse(s, f); 
+                return true; 
+            } catch (DateTimeException ignored) {
+                
+            }
         }
         return false;
     }
