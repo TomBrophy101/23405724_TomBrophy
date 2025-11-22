@@ -2,8 +2,6 @@ package com.mycompany.tombrophy_server;
 
 import java.io.*;
 import java.net.*;
-import java.time.*;
-import java.time.format.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -155,31 +153,30 @@ public class TomBrophy_Server {
                     
                     validateTime(time);
 
-                    Event eventAdded = new Event(date, time, desc);
+                    Event eventToAdd = new Event(date, time, desc);
                    
                     // Synchronized block for thread safety on the map
                     synchronized (eventBoard) {
                         // Get or create the list for the given date
                         List<Event> eventsForDate = eventBoard.computeIfAbsent(date, k -> Collections.synchronizedList(new ArrayList<>()));
-                        eventsForDate.add(eventAdded);
-                        Collections.sort(eventsForDate, Comparator.comparing(e -> e.time));
-//                        boolean eventExists = eventsForDate.stream().anyMatch(e -> 
-//                                e.date.trim().equalsIgnoreCase(eventToAdd.date.trim()) &&
-//                                e.time.trim().equalsIgnoreCase(eventToAdd.time.trim()) &&
-//                                e.description.trim().equalsIgnoreCase(eventToAdd.description.trim())        
-//                        );
-//                        
-//                        if (!eventExists) {
-//                            eventsForDate.add(eventToAdd);
-//                            // Sort the list by time (simple string comparison for now)
-//                            Collections.sort(eventsForDate, Comparator.comparing(e -> e.time));
-//                        }
+                        
+                        boolean eventExists = eventsForDate.stream().anyMatch(e -> 
+                                e.date.trim().equalsIgnoreCase(eventToAdd.date.trim()) &&
+                                e.time.trim().equalsIgnoreCase(eventToAdd.time.trim()) &&
+                                e.description.trim().equalsIgnoreCase(eventToAdd.description.trim())        
+                        );
+                        
+                        if (!eventExists) {
+                            eventsForDate.add(eventToAdd);
+                            // Sort the list by time (simple string comparison for now)
+                            Collections.sort(eventsForDate, Comparator.comparing(e -> e.time));
+                        }
                     }
                    
                     saveEventsToFile();
                     
                     // Server replies with a list of all events due on the new event's date.
-                    return eventAdded.date + "; " + eventAdded.time + ", " + eventAdded.description + " has been added";
+                    return formatEventList(eventBoard.get(date));
 
                 case "remove":
                     // Assignment: action; date; time; description (4 fields)
@@ -219,7 +216,7 @@ public class TomBrophy_Server {
                         saveEventsToFile();
                        
                         // Server replies with a list of all events that are still due on the date of the removed event.
-                        return removedEvent.date + "; " + removedEvent.time +", " + removedEvent.description + " has been removed";
+                        return formatEventList(eventsOnDate);
                     }
                    
                     return "no events";
@@ -323,52 +320,19 @@ public class TomBrophy_Server {
         }
     }
     
-    private static final DateTimeFormatter[] DATE_FMTS = new DateTimeFormatter[] {
-        new DateTimeFormatterBuilder()
-            .parseCaseInsensitive()
-            .appendPattern("d MMMM yyyy")
-            .toFormatter(Locale.ENGLISH),
-        DateTimeFormatter.ISO_LOCAL_DATE
-    };
-    
-    private LocalDate parseDate(String s) {
-        for (DateTimeFormatter f : DATE_FMTS) {
-            try {
-                return LocalDate.parse(s.trim(), f);
-            } catch (DateTimeParseException ignored) {}
-        }
-        return LocalDate.MAX;
-    }
-    
     private synchronized void saveEventsToFile() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(EVENTS_FILE))) {
-            
-            List<String> dates = new ArrayList<>(eventBoard.keySet());
-            dates.sort((d1, d2) -> parseDate(d1).compareTo(parseDate(d2)));
-            
-            for (String dateKey : dates) {
-                List<Event> events = eventBoard.get(dateKey);
-                if (events == null || events.isEmpty()) 
-                    continue;
-                
-                List<Event> copy = new ArrayList<>(events);
-                copy.sort(Comparator.comparing(e -> e.time));
-                
-                for (Event e : copy) {
+            for (List<Event> events : eventBoard.values()) {
+                for (Event e : events) {
                     writer.printf("%s; %s; %s%n", e.date, e.time, e.description);
                 }
             }
-//            for (List<Event> events : eventBoard.values()) {
-//                for (Event e : events) {
-//                    writer.printf("%s; %s; %s%n", e.date, e.time, e.description);
-//                }
-//            }
         } catch (IOException e) {
             System.err.println("Failed to save events to file: " + e.getMessage());
         }
     }
     
-    private synchronized void loadEventsFromFile() {
+    private void loadEventsFromFile() {
         File file = new File(EVENTS_FILE);
         if (!file.exists()) {
             return;
