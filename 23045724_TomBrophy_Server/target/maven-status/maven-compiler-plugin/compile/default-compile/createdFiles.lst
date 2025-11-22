@@ -1,0 +1,5 @@
+com\mycompany\tombrophy_server\Event.class
+com\mycompany\tombrophy_server\TomBrophy_ClientRun.class
+com\mycompany\tombrophy_server\TomBrophy_Server$ClientHandler.class
+com\mycompany\tombrophy_server\TomBrophy_Server.class
+com\mycompany\tombrophy_server\InvalidCommandException.class
